@@ -1,12 +1,33 @@
 const request = require('request')
 const cheerio = require('cheerio')
+const Browser = require('zombie')
+
+function Aspx(url) {
+    return new Promise((resolve, reject) => {
+        let Web = new Browser()
+        Web.visit(url, () => {
+            const $ = cheerio.load(Web.html())
+            let Address = $("td:contains('地址')").next().text().replace(/[ \n\t]/g, "")
+            if (Address.length)
+                resolve(Address)
+            else
+                reject("Can't Get Element")
+            Web.tabs.closeAll()
+        })
+    })
+}
 
 function Address(url) {
-    url = typeof url === 'string' ? encodeURI(url) : url
+    if (typeof url === 'string')
+        url = encodeURI(url)
+    else
+        return Promise.reject('Error type')
+    if (url.includes('taiwanjobs.gov'))
+        return Aspx(url)
     return new Promise((resolve, reject) => {
-        if (!url.includes('yes123.com') && !url.includes('518.com') && !url.includes('job178.com'))
-            reject('Only:yes123,518,job178')
-        else
+        if (!url.includes('yes123.com') && !url.includes('518.com') && !url.includes('job178.com') && !url.includes('taiwanjobs.gov'))
+            reject('Only:yes123,518,job178,taiwanjobs')
+        else if (!url.includes('taiwanjobs.gov'))
             request(url, (err, res, body) => {
                 if (!err) {
                     const $ = cheerio.load(body)
@@ -22,8 +43,5 @@ function Address(url) {
     })
 }
 
-// Address('https://www.yes123.com.tw/admin/job_refer_comp_info.asp?p_id=20140206142429_12204275').then(x => console.log(x)).catch(err => console.log(err))
-// Address('https://www.yes123.com.tw/admin/job_refer_comp_info.asp?p_id=92905_43816068').then(x => console.log(x)).catch(err => console.log(err))
-// Address('https://www.518.com.tw/單人房住宿空間_統領健身企業股份有限公司-company-1446114.html').then(x => console.log(x)).catch(err => console.log(err))
-// Address('http://www.job178.com.tw/company_4681').then(x => console.log(x)).catch(err => console.log(err))
-// Address('https://www.taiwanjobs.gov.tw/Internet/jobwanted/company_desc.aspx?EMPLOYER_ID=397976&BRANCH_ID=7925771').then(x => console.log(x)).catch(err => console.log(err))
+//input url(String) return Address(String)
+Address('https://www.taiwanjobs.gov.tw/Internet/jobwanted/company_desc.aspx?EMPLOYER_ID=66467&BRANCH_ID=7772629').then(x => console.log(x)).catch(x => console.log(x))
